@@ -1,0 +1,793 @@
+{
+  "metadata": {
+    "project": "Insurance Claims Synthetic Data Generator",
+    "report_version": "1.0",
+    "generated_at_utc": "2026-10-27T15:07:29+00:00",
+    "currency": "INR",
+    "clean_dataset_directory": "data",
+    "edge_dataset_directory": "data_edge_cases",
+    "output_directory": "reports"
+  },
+  "executive_summary": {
+    "clean_dataset_status": "PASS",
+    "clean_dataset_status_reasons": [
+      "No reported clean-dataset issues were identified by the available reports."
+    ],
+    "clean_claim_count": 1000,
+    "clean_policy_count": 2000,
+    "clean_customer_count": 1400,
+    "clean_table_count": 15,
+    "expected_table_count": 15,
+    "clean_validation_errors": 0,
+    "clean_validation_warnings": 0,
+    "clean_business_rule_mismatches": 0,
+    "edge_case_dataset_included": true,
+    "injected_edge_case_count": 8,
+    "edge_business_rule_mismatches": 35,
+    "edge_validation_errors": 3
+  },
+  "clean_dataset": {
+    "dataset": {
+      "directory": "data",
+      "directory_exists": true,
+      "tables_expected": 15,
+      "tables_found": 15,
+      "tables_missing": [],
+      "total_rows_across_expected_tables": 32545,
+      "table_inventory": [
+        {
+          "table": "customer",
+          "file": "customer.csv",
+          "exists": true,
+          "rows": 1400,
+          "columns": [
+            "customer_id",
+            "full_name",
+            "date_of_birth",
+            "city",
+            "kyc_status",
+            "created_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "coverage",
+          "file": "coverage.csv",
+          "exists": true,
+          "rows": 15,
+          "columns": [
+            "coverage_id",
+            "claim_type",
+            "description",
+            "default_limit",
+            "default_deductible",
+            "exclusions"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "policy",
+          "file": "policy.csv",
+          "exists": true,
+          "rows": 2000,
+          "columns": [
+            "policy_id",
+            "customer_id",
+            "product",
+            "start_date",
+            "end_date",
+            "status",
+            "cancelled_date",
+            "premium"
+          ],
+          "column_count": 8
+        },
+        {
+          "table": "policy_coverage",
+          "file": "policy_coverage.csv",
+          "exists": true,
+          "rows": 4400,
+          "columns": [
+            "policy_id",
+            "coverage_id",
+            "coverage_limit",
+            "deductible",
+            "effective_from",
+            "effective_to"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "adjuster",
+          "file": "adjuster.csv",
+          "exists": true,
+          "rows": 40,
+          "columns": [
+            "adjuster_id",
+            "name",
+            "specialization",
+            "region",
+            "max_authority"
+          ],
+          "column_count": 5
+        },
+        {
+          "table": "incident",
+          "file": "incident.csv",
+          "exists": true,
+          "rows": 1000,
+          "columns": [
+            "incident_id",
+            "policy_id",
+            "incident_type",
+            "incident_date",
+            "location",
+            "reported_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "claim",
+          "file": "claim.csv",
+          "exists": true,
+          "rows": 1000,
+          "columns": [
+            "claim_id",
+            "policy_id",
+            "incident_id",
+            "claim_type",
+            "claim_date",
+            "claimed_amount",
+            "status",
+            "decision_reason"
+          ],
+          "column_count": 8
+        },
+        {
+          "table": "claim_item",
+          "file": "claim_item.csv",
+          "exists": true,
+          "rows": 2177,
+          "columns": [
+            "claim_item_id",
+            "claim_id",
+            "coverage_id",
+            "item_type",
+            "claimed_amount",
+            "approved_amount"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "document",
+          "file": "document.csv",
+          "exists": true,
+          "rows": 4051,
+          "columns": [
+            "document_id",
+            "claim_id",
+            "doc_type",
+            "is_mandatory",
+            "status",
+            "received_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "claim_assignment",
+          "file": "claim_assignment.csv",
+          "exists": true,
+          "rows": 988,
+          "columns": [
+            "assignment_id",
+            "claim_id",
+            "adjuster_id",
+            "assigned_date",
+            "status"
+          ],
+          "column_count": 5
+        },
+        {
+          "table": "assessment",
+          "file": "assessment.csv",
+          "exists": true,
+          "rows": 902,
+          "columns": [
+            "assessment_id",
+            "claim_id",
+            "assignment_id",
+            "eligibility",
+            "reason_code",
+            "assessed_amount",
+            "fraud_score",
+            "assessed_date"
+          ],
+          "column_count": 8
+        },
+        {
+          "table": "assessment_check",
+          "file": "assessment_check.csv",
+          "exists": true,
+          "rows": 7216,
+          "columns": [
+            "check_id",
+            "assessment_id",
+            "claim_id",
+            "check_code",
+            "check_name",
+            "result",
+            "observed_value",
+            "threshold_value",
+            "reason_code"
+          ],
+          "column_count": 9
+        },
+        {
+          "table": "reserve",
+          "file": "reserve.csv",
+          "exists": true,
+          "rows": 1902,
+          "columns": [
+            "reserve_id",
+            "claim_id",
+            "assessment_id",
+            "reserve_amount",
+            "version",
+            "created_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "settlement",
+          "file": "settlement.csv",
+          "exists": true,
+          "rows": 866,
+          "columns": [
+            "settlement_id",
+            "claim_id",
+            "assessment_id",
+            "settlement_amount",
+            "deductible_applied",
+            "status",
+            "payment_date"
+          ],
+          "column_count": 7
+        },
+        {
+          "table": "claim_status_event",
+          "file": "claim_status_event.csv",
+          "exists": true,
+          "rows": 4588,
+          "columns": [
+            "event_id",
+            "claim_id",
+            "from_status",
+            "to_status",
+            "event_timestamp",
+            "reason"
+          ],
+          "column_count": 6
+        }
+      ],
+      "claim_count": 1000,
+      "customer_count": 1400,
+      "policy_count": 2000,
+      "assessment_count": 902,
+      "reserve_record_count": 1902,
+      "settlement_record_count": 866,
+      "status_event_count": 4588,
+      "claim_outcome_distribution": null,
+      "claim_status_distribution": {
+        "APPROVED": 54,
+        "CLOSED": 804,
+        "SETTLED": 22,
+        "SUBMITTED": 58,
+        "UNDER_ASSESSMENT": 62
+      },
+      "assessment_check_distribution": {
+        "FAIL": 107,
+        "PASS": 7109
+      },
+      "assessment_check_code_distribution": {
+        "CHK01": 902,
+        "CHK02": 902,
+        "CHK03": 902,
+        "CHK04": 902,
+        "CHK05": 902,
+        "CHK06": 902,
+        "CHK07": 902,
+        "CHK08": 902
+      },
+      "assessment_checks": {
+        "total": 7216,
+        "pass": 7109,
+        "fail": 107,
+        "unclassified": 0,
+        "pass_rate_pct": 98.52
+      },
+      "financials": {
+        "claimed_amount": {
+          "available": true,
+          "column": "claimed_amount",
+          "count": 1000,
+          "total": 337630710.0,
+          "average": 337630.71,
+          "minimum": 1200.0,
+          "maximum": 3694660.0
+        },
+        "assessed_or_approved_amount": {
+          "available": true,
+          "column": "assessed_amount",
+          "count": 902,
+          "total": 284616500.0,
+          "average": 315539.36,
+          "minimum": 0.0,
+          "maximum": 3694660.0
+        },
+        "reserve_amount": {
+          "available": true,
+          "column": "reserve_amount",
+          "count": 1902,
+          "total": 592995830.0,
+          "average": 311774.88,
+          "minimum": 0.0,
+          "maximum": 3669660.0
+        },
+        "settlement_amount": {
+          "available": true,
+          "column": "settlement_amount",
+          "count": 866,
+          "total": 270987050.0,
+          "average": 312918.07,
+          "minimum": 1190.0,
+          "maximum": 3669660.0
+        },
+        "currency": "INR",
+        "note": "Totals are calculated from numeric values in the source CSVs. Confirm source units and column semantics before financial use."
+      },
+      "fraud_summary": {
+        "available": true,
+        "column": "fraud_score",
+        "scored_assessments": 902,
+        "average_score": 12.8,
+        "scores_at_or_above_50": 22
+      },
+      "document_summary": {
+        "total_document_records": 4051,
+        "mandatory_document_records": 3752,
+        "mandatory_documents_with_received_date": 3752,
+        "mandatory_document_received_rate_pct": 100.0,
+        "document_type_column_available": true
+      },
+      "duplicate_claim_business_key_groups": [],
+      "duplicate_claim_business_key_group_count": 0
+    },
+    "business_rule_audit": {
+      "available": true,
+      "path": "data\\clean_audit.csv",
+      "row_count": 0,
+      "column_names": [],
+      "status_counts": {},
+      "code_counts": {},
+      "mismatch_count": 0
+    },
+    "validation": {
+      "available": true,
+      "path": "data\\validation_report.csv",
+      "row_count": 0,
+      "column_names": [],
+      "status_counts": {},
+      "code_counts": {},
+      "errors": 0,
+      "warnings": 0,
+      "info": 0
+    }
+  },
+  "edge_case_dataset": {
+    "dataset": {
+      "directory": "data_edge_cases",
+      "directory_exists": true,
+      "tables_expected": 15,
+      "tables_found": 15,
+      "tables_missing": [],
+      "total_rows_across_expected_tables": 32545,
+      "table_inventory": [
+        {
+          "table": "customer",
+          "file": "customer.csv",
+          "exists": true,
+          "rows": 1400,
+          "columns": [
+            "customer_id",
+            "full_name",
+            "date_of_birth",
+            "city",
+            "kyc_status",
+            "created_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "coverage",
+          "file": "coverage.csv",
+          "exists": true,
+          "rows": 15,
+          "columns": [
+            "coverage_id",
+            "claim_type",
+            "description",
+            "default_limit",
+            "default_deductible",
+            "exclusions"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "policy",
+          "file": "policy.csv",
+          "exists": true,
+          "rows": 2000,
+          "columns": [
+            "policy_id",
+            "customer_id",
+            "product",
+            "start_date",
+            "end_date",
+            "status",
+            "cancelled_date",
+            "premium"
+          ],
+          "column_count": 8
+        },
+        {
+          "table": "policy_coverage",
+          "file": "policy_coverage.csv",
+          "exists": true,
+          "rows": 4400,
+          "columns": [
+            "policy_id",
+            "coverage_id",
+            "coverage_limit",
+            "deductible",
+            "effective_from",
+            "effective_to"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "adjuster",
+          "file": "adjuster.csv",
+          "exists": true,
+          "rows": 40,
+          "columns": [
+            "adjuster_id",
+            "name",
+            "specialization",
+            "region",
+            "max_authority"
+          ],
+          "column_count": 5
+        },
+        {
+          "table": "incident",
+          "file": "incident.csv",
+          "exists": true,
+          "rows": 1000,
+          "columns": [
+            "incident_id",
+            "policy_id",
+            "incident_type",
+            "incident_date",
+            "location",
+            "reported_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "claim",
+          "file": "claim.csv",
+          "exists": true,
+          "rows": 1000,
+          "columns": [
+            "claim_id",
+            "policy_id",
+            "incident_id",
+            "claim_type",
+            "claim_date",
+            "claimed_amount",
+            "status",
+            "decision_reason"
+          ],
+          "column_count": 8
+        },
+        {
+          "table": "claim_item",
+          "file": "claim_item.csv",
+          "exists": true,
+          "rows": 2177,
+          "columns": [
+            "claim_item_id",
+            "claim_id",
+            "coverage_id",
+            "item_type",
+            "claimed_amount",
+            "approved_amount"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "document",
+          "file": "document.csv",
+          "exists": true,
+          "rows": 4050,
+          "columns": [
+            "document_id",
+            "claim_id",
+            "doc_type",
+            "is_mandatory",
+            "status",
+            "received_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "claim_assignment",
+          "file": "claim_assignment.csv",
+          "exists": true,
+          "rows": 988,
+          "columns": [
+            "assignment_id",
+            "claim_id",
+            "adjuster_id",
+            "assigned_date",
+            "status"
+          ],
+          "column_count": 5
+        },
+        {
+          "table": "assessment",
+          "file": "assessment.csv",
+          "exists": true,
+          "rows": 902,
+          "columns": [
+            "assessment_id",
+            "claim_id",
+            "assignment_id",
+            "eligibility",
+            "reason_code",
+            "assessed_amount",
+            "fraud_score",
+            "assessed_date"
+          ],
+          "column_count": 8
+        },
+        {
+          "table": "assessment_check",
+          "file": "assessment_check.csv",
+          "exists": true,
+          "rows": 7216,
+          "columns": [
+            "check_id",
+            "assessment_id",
+            "claim_id",
+            "check_code",
+            "check_name",
+            "result",
+            "observed_value",
+            "threshold_value",
+            "reason_code"
+          ],
+          "column_count": 9
+        },
+        {
+          "table": "reserve",
+          "file": "reserve.csv",
+          "exists": true,
+          "rows": 1902,
+          "columns": [
+            "reserve_id",
+            "claim_id",
+            "assessment_id",
+            "reserve_amount",
+            "version",
+            "created_date"
+          ],
+          "column_count": 6
+        },
+        {
+          "table": "settlement",
+          "file": "settlement.csv",
+          "exists": true,
+          "rows": 867,
+          "columns": [
+            "settlement_id",
+            "claim_id",
+            "assessment_id",
+            "settlement_amount",
+            "deductible_applied",
+            "status",
+            "payment_date"
+          ],
+          "column_count": 7
+        },
+        {
+          "table": "claim_status_event",
+          "file": "claim_status_event.csv",
+          "exists": true,
+          "rows": 4588,
+          "columns": [
+            "event_id",
+            "claim_id",
+            "from_status",
+            "to_status",
+            "event_timestamp",
+            "reason"
+          ],
+          "column_count": 6
+        }
+      ],
+      "claim_count": 1000,
+      "customer_count": 1400,
+      "policy_count": 2000,
+      "assessment_count": 902,
+      "reserve_record_count": 1902,
+      "settlement_record_count": 867,
+      "status_event_count": 4588,
+      "claim_outcome_distribution": null,
+      "claim_status_distribution": {
+        "APPROVED": 54,
+        "CLOSED": 804,
+        "SETTLED": 22,
+        "SUBMITTED": 58,
+        "UNDER_ASSESSMENT": 62
+      },
+      "assessment_check_distribution": {
+        "FAIL": 107,
+        "PASS": 7109
+      },
+      "assessment_check_code_distribution": {
+        "CHK01": 902,
+        "CHK02": 902,
+        "CHK03": 902,
+        "CHK04": 902,
+        "CHK05": 902,
+        "CHK06": 902,
+        "CHK07": 902,
+        "CHK08": 902
+      },
+      "assessment_checks": {
+        "total": 7216,
+        "pass": 7109,
+        "fail": 107,
+        "unclassified": 0,
+        "pass_rate_pct": 98.52
+      },
+      "financials": {
+        "claimed_amount": {
+          "available": true,
+          "column": "claimed_amount",
+          "count": 1000,
+          "total": 337630710.0,
+          "average": 337630.71,
+          "minimum": 1200.0,
+          "maximum": 3694660.0
+        },
+        "assessed_or_approved_amount": {
+          "available": true,
+          "column": "assessed_amount",
+          "count": 902,
+          "total": 284616500.0,
+          "average": 315539.36,
+          "minimum": 0.0,
+          "maximum": 3694660.0
+        },
+        "reserve_amount": {
+          "available": true,
+          "column": "reserve_amount",
+          "count": 1902,
+          "total": 592995830.0,
+          "average": 311774.88,
+          "minimum": 0.0,
+          "maximum": 3669660.0
+        },
+        "settlement_amount": {
+          "available": true,
+          "column": "settlement_amount",
+          "count": 867,
+          "total": 272335390.0,
+          "average": 314112.33,
+          "minimum": 1190.0,
+          "maximum": 3669660.0
+        },
+        "currency": "INR",
+        "note": "Totals are calculated from numeric values in the source CSVs. Confirm source units and column semantics before financial use."
+      },
+      "fraud_summary": {
+        "available": true,
+        "column": "fraud_score",
+        "scored_assessments": 902,
+        "average_score": 12.8,
+        "scores_at_or_above_50": 22
+      },
+      "document_summary": {
+        "total_document_records": 4050,
+        "mandatory_document_records": 3751,
+        "mandatory_documents_with_received_date": 3751,
+        "mandatory_document_received_rate_pct": 100.0,
+        "document_type_column_available": true
+      },
+      "duplicate_claim_business_key_groups": [],
+      "duplicate_claim_business_key_group_count": 0
+    },
+    "audit": {
+      "available": true,
+      "path": "data_edge_cases\\audit_mismatches.csv",
+      "row_count": 35,
+      "column_names": [
+        "claim_id",
+        "category",
+        "expected",
+        "actual"
+      ],
+      "status_counts": {},
+      "code_counts": {
+        "eligibility": 6,
+        "reason code": 6,
+        "assessment_check log": 6,
+        "assessed amount": 5,
+        "settlement on a claim that is not payable": 6,
+        "settlement amount": 1,
+        "settlement above limit": 1,
+        "settlement count": 1,
+        "fraud score": 2,
+        "status vs manual referral": 1
+      },
+      "mismatch_count": 35
+    },
+    "validation": {
+      "available": true,
+      "path": "data_edge_cases\\validation_report.csv",
+      "row_count": 3,
+      "column_names": [
+        "severity",
+        "table_name",
+        "record_id",
+        "category",
+        "details"
+      ],
+      "status_counts": {
+        "ERROR": 3
+      },
+      "code_counts": {
+        "DUPLICATE_CLAIM_KEY": 2,
+        "MULTIPLE_SETTLEMENTS": 1
+      },
+      "errors": 3,
+      "warnings": 0,
+      "info": 0
+    },
+    "ground_truth": {
+      "available": true,
+      "path": "data_edge_cases\\ground_truth.csv",
+      "injected_case_count": 8,
+      "case_type_distribution": {
+        "CLAIM_DATE_BEFORE_POLICY_START": 1,
+        "POLICY_CANCELLED_BEFORE_INCIDENT": 1,
+        "DUPLICATE_CLAIM": 1,
+        "SETTLEMENT_EXCEEDS_LIMIT": 1,
+        "MISSING_MANDATORY_DOCUMENT": 1,
+        "CLAIM_PAID_TWICE": 1,
+        "FRAUD_INDICATOR": 1,
+        "INCOMPLETE_EVIDENCE": 1
+      }
+    },
+    "detected_business_key_duplicate_groups": 0
+  },
+  "interpretation_notes": [
+    "The clean dataset is expected to pass validation and business-rule audit.",
+    "The edge-case dataset intentionally contains injected anomalies; detected issues are not automatically treated as clean-data failures.",
+    "A missing report is marked unavailable and is not assumed to contain zero issues.",
+    "Financial totals depend on the meaning and units of the source columns.",
+    "This report is a quality-control summary, not a legal or actuarial opinion."
+  ]
+}

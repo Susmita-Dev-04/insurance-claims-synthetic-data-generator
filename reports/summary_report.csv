@@ -1,0 +1,31 @@
+﻿section,metric,value,notes
+Report,project,Insurance Claims Synthetic Data Generator,
+Report,generated_at_utc,2026-10-27T15:07:29+00:00,
+Clean dataset,status,PASS,
+Clean dataset,customers,1400,
+Clean dataset,policies,2000,
+Clean dataset,claims,1000,
+Clean dataset,assessments,902,
+Clean dataset,tables_found,15,
+Clean dataset,tables_expected,15,
+Clean dataset,total_rows,32545,
+Clean dataset,missing_tables,[],
+Audit,business_rule_mismatches,0,
+Validation,errors,0,
+Validation,warnings,0,
+Financials,total_claimed_amount,337630710.0,Source column: claimed_amount; numeric rows: 1000
+Financials,total_assessed_or_approved_amount,284616500.0,Source column: assessed_amount; numeric rows: 902
+Financials,total_reserve_amount,592995830.0,Source column: reserve_amount; numeric rows: 1902
+Financials,total_settlement_amount,270987050.0,Source column: settlement_amount; numeric rows: 866
+Claims,outcome_distribution,,
+Claims,status_distribution,"{""APPROVED"": 54, ""CLOSED"": 804, ""SETTLED"": 22, ""SUBMITTED"": 58, ""UNDER_ASSESSMENT"": 62}",
+Business checks,check_pass_count,7109,
+Business checks,check_fail_count,107,
+Business checks,check_pass_rate_pct,98.52,
+Documents,mandatory_document_received_rate_pct,100.0,
+Fraud,scores_at_or_above_50,22,
+Data quality,duplicate_claim_key_groups,0,
+Edge cases,injected_case_count,8,
+Edge cases,business_rule_mismatches,35,
+Edge cases,validation_errors,3,
+Edge cases,duplicate_claim_key_groups,0,

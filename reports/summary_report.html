@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insurance Claims Synthetic Data Generator | Summary Report</title>
+<style>
+:root {
+  --ink: #172033;
+  --muted: #637083;
+  --line: #dce3ec;
+  --surface: #ffffff;
+  --page: #f4f7fb;
+  --navy: #14233d;
+  --blue: #2459a9;
+  --green: #167447;
+  --green-bg: #e7f6ed;
+  --amber: #895900;
+  --amber-bg: #fff3d5;
+  --red: #a52929;
+  --red-bg: #fde9e9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 15px/1.55 "Segoe UI", Arial, sans-serif;
+}
+header {
+  background: var(--navy);
+  color: white;
+  padding: 34px max(22px, calc((100% - 1160px) / 2));
+}
+header h1 { margin: 0 0 8px; font-size: clamp(25px, 4vw, 35px); }
+header p { margin: 0; color: #d7e1f2; }
+main { max-width: 1160px; margin: 24px auto; padding: 0 18px 36px; }
+section, .hero-status {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 16px rgba(24, 39, 65, .035);
+}
+h2 { margin: 0 0 14px; font-size: 21px; }
+h3 { margin: 18px 0 8px; font-size: 16px; }
+p { margin-top: 6px; }
+.hero-status { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.hero-status strong { font-size: 20px; }
+.status {
+  border-radius: 999px; padding: 7px 13px; font-weight: 800;
+  letter-spacing: .04em; white-space: nowrap;
+}
+.status.pass { color: var(--green); background: var(--green-bg); }
+.status.review { color: var(--amber); background: var(--amber-bg); }
+.status.fail { color: var(--red); background: var(--red-bg); }
+.cards {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px; margin-bottom: 18px;
+}
+.card { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+.card-label { color: var(--muted); font-size: 13px; }
+.card-value { font-size: 26px; font-weight: 750; margin-top: 4px; overflow-wrap: anywhere; }
+.table-wrap { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { color: #34435a; background: #f6f8fb; font-weight: 700; }
+tbody tr:last-child td { border-bottom: 0; }
+.muted { color: var(--muted); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+ul { padding-left: 22px; }
+footer { color: var(--muted); font-size: 13px; text-align: center; padding: 12px; }
+@media (max-width: 760px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .two-col { grid-template-columns: 1fr; }
+  .hero-status { align-items: flex-start; flex-direction: column; }
+  section { padding: 16px; }
+}
+@media print {
+  body { background: white; }
+  header { background: white; color: var(--ink); padding: 18px 0; }
+  header p { color: var(--muted); }
+  main { margin: 0; max-width: none; padding: 0; }
+  section, .hero-status, .card { box-shadow: none; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Insurance Claims Synthetic Data Generator</h1>
+  <p>Executive data-quality, claims, audit and financial summary</p>
+  <p>Generated (UTC): 2026-10-27T15:07:29+00:00</p>
+</header>
+<main>
+  <div class="hero-status">
+    <div>
+      <strong>Clean baseline assessment</strong>
+      <div class="muted">Status based on available validation and business-rule audit reports</div>
+    </div>
+    <span class="status pass">PASS</span>
+  </div>
+
+  <div class="cards"><div class='card'><div class='card-label'>Claims</div><div class='card-value'>1,000</div></div><div class='card'><div class='card-label'>Policies</div><div class='card-value'>2,000</div></div><div class='card'><div class='card-label'>Customers</div><div class='card-value'>1,400</div></div><div class='card'><div class='card-label'>Tables found</div><div class='card-value'>15 / 15</div></div><div class='card'><div class='card-label'>Validation errors</div><div class='card-value'>0</div></div><div class='card'><div class='card-label'>Audit mismatches</div><div class='card-value'>0</div></div></div>
+
+  <section>
+    <h2>Executive interpretation</h2>
+    <ul><li>No reported clean-dataset issues were identified by the available reports.</li></ul>
+    <p class="muted">A status of REVIEW means one or more expected report inputs were unavailable
+    or could not be interpreted. It does not mean that the dataset has passed all checks.</p>
+  </section>
+
+  <section>
+    <h2>Dataset inventory</h2>
+    <p class="muted">Expected transactional tables: 15.
+    Total rows across expected tables: 32,545.</p>
+    <div class='table-wrap'><table><thead><tr><th>Table</th><th>File status</th><th>Rows</th><th>Columns</th></tr></thead><tbody><tr><td>customer</td><td>Present</td><td>1,400</td><td>6</td></tr><tr><td>coverage</td><td>Present</td><td>15</td><td>6</td></tr><tr><td>policy</td><td>Present</td><td>2,000</td><td>8</td></tr><tr><td>policy_coverage</td><td>Present</td><td>4,400</td><td>6</td></tr><tr><td>adjuster</td><td>Present</td><td>40</td><td>5</td></tr><tr><td>incident</td><td>Present</td><td>1,000</td><td>6</td></tr><tr><td>claim</td><td>Present</td><td>1,000</td><td>8</td></tr><tr><td>claim_item</td><td>Present</td><td>2,177</td><td>6</td></tr><tr><td>document</td><td>Present</td><td>4,051</td><td>6</td></tr><tr><td>claim_assignment</td><td>Present</td><td>988</td><td>5</td></tr><tr><td>assessment</td><td>Present</td><td>902</td><td>8</td></tr><tr><td>assessment_check</td><td>Present</td><td>7,216</td><td>9</td></tr><tr><td>reserve</td><td>Present</td><td>1,902</td><td>6</td></tr><tr><td>settlement</td><td>Present</td><td>866</td><td>7</td></tr><tr><td>claim_status_event</td><td>Present</td><td>4,588</td><td>6</td></tr></tbody></table></div>
+  </section>
+
+  <div class="two-col">
+    <section>
+      <h2>Assessment outcomes</h2>
+      <div class='table-wrap'><table><thead><tr><th>Assessment outcome</th><th>Count</th></tr></thead><tbody><tr><td>Unavailable</td><td>No matching outcome column found</td></tr></tbody></table></div>
+      <h3>Claim status distribution</h3>
+      <div class='table-wrap'><table><thead><tr><th>Claim status</th><th>Count</th></tr></thead><tbody><tr><td>APPROVED</td><td>54</td></tr><tr><td>CLOSED</td><td>804</td></tr><tr><td>SETTLED</td><td>22</td></tr><tr><td>SUBMITTED</td><td>58</td></tr><tr><td>UNDER_ASSESSMENT</td><td>62</td></tr></tbody></table></div>
+    </section>
+    <section>
+      <h2>Business-rule checks</h2>
+      <div class='table-wrap'><table><thead><tr><th>Business-check metric</th><th>Value</th></tr></thead><tbody><tr><td>Total checks</td><td>7,216</td></tr><tr><td>Passed checks</td><td>7,109</td></tr><tr><td>Failed checks</td><td>107</td></tr><tr><td>Unclassified checks</td><td>0</td></tr><tr><td>Pass rate (%)</td><td>98.52</td></tr></tbody></table></div>
+      <h3>Fraud-score profile</h3>
+      <div class='table-wrap'><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td>Scores available</td><td>902</td></tr><tr><td>Average score</td><td>12.80</td></tr><tr><td>Scores ≥ 50</td><td>22</td></tr></tbody></table></div>
+    </section>
+  </div>
+
+  <section>
+    <h2>Financial summary</h2>
+    <p class="muted">Amounts are calculated from source CSV values. Verify the source column semantics
+    and units before using these totals for financial decisions.</p>
+    <div class='table-wrap'><table><thead><tr><th>Financial metric</th><th>Total (source units)</th><th>Numeric rows</th><th>Source column</th></tr></thead><tbody><tr><td>Total claimed amount</td><td>337,630,710.00</td><td>1,000</td><td>claimed_amount</td></tr><tr><td>Total assessed/approved amount</td><td>284,616,500.00</td><td>902</td><td>assessed_amount</td></tr><tr><td>Total reserve amount</td><td>592,995,830.00</td><td>1,902</td><td>reserve_amount</td></tr><tr><td>Total settlement amount</td><td>270,987,050.00</td><td>866</td><td>settlement_amount</td></tr></tbody></table></div>
+  </section>
+
+  <section>
+    <h2>Document completeness</h2>
+    <div class='table-wrap'><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td>Document records</td><td>4,051</td></tr><tr><td>Mandatory document records</td><td>3,752</td></tr><tr><td>Mandatory documents with received date</td><td>3,752</td></tr><tr><td>Mandatory-document received rate (%)</td><td>100.00</td></tr></tbody></table></div>
+  </section>
+
+  <section><h2>Edge-case test results</h2><p class='muted'>These results are expected to include findings because the edge-case dataset intentionally contains injected anomalies.</p><div class='table-wrap'><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody><tr><td>Injected cases</td><td>8</td></tr><tr><td>Audit mismatch count/rows</td><td>35</td></tr><tr><td>Validation errors</td><td>3</td></tr><tr><td>Validation warnings</td><td>0</td></tr><tr><td>Duplicate claim-key groups</td><td>0</td></tr><tr><td>Claims</td><td>1,000</td></tr></tbody></table></div></section>
+
+  <section>
+    <h2>Methodology and limitations</h2>
+    <ul><li>The clean dataset is expected to pass validation and business-rule audit.</li><li>The edge-case dataset intentionally contains injected anomalies; detected issues are not automatically treated as clean-data failures.</li><li>A missing report is marked unavailable and is not assumed to contain zero issues.</li><li>Financial totals depend on the meaning and units of the source columns.</li><li>This report is a quality-control summary, not a legal or actuarial opinion.</li></ul>
+  </section>
+  <footer>Insurance Claims Synthetic Data Generator · Report version 1.0</footer>
+</main>
+</body>
+</html>
