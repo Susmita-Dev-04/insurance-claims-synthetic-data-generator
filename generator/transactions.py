@@ -30,6 +30,8 @@ TXN_COLUMNS = {
     "claim_assignment": ["assignment_id", "claim_id", "adjuster_id", "assigned_date", "status"],
     "assessment": ["assessment_id", "claim_id", "assignment_id", "eligibility", "reason_code",
                    "assessed_amount", "fraud_score", "assessed_date"],
+    "assessment_check": ["check_id", "assessment_id", "claim_id", "check_code", "check_name", "result",
+                         "observed_value", "threshold_value", "reason_code"],
     "reserve": ["reserve_id", "claim_id", "assessment_id", "reserve_amount", "version", "created_date"],
     "settlement": ["settlement_id", "claim_id", "assessment_id", "settlement_amount", "deductible_applied",
                    "status", "payment_date"],
@@ -200,7 +202,7 @@ def build_transactions(master, n_claims=C.DEFAULT_CLAIMS, seed=C.SEED):
 
         # ---- preliminary reserve (version 1) exists for every claim ----
         T["reserve"].append(dict(reserve_id=ids.reserve_id(cid, 1), claim_id=cid, assessment_id=None,
-                                 reserve_amount=R.reserve_cents(claimed_c, limit_c, ded_c) / 100,
+                                 reserve_amount=R.reserve_cents(sum(item_c), limit_c, ded_c) / 100,
                                  version=1, created_date=claim_date))
 
         approved_c = [None] * n_items
@@ -218,12 +220,19 @@ def build_transactions(master, n_claims=C.DEFAULT_CLAIMS, seed=C.SEED):
             cov_row = next(c for c in master["coverage"] if c["coverage_id"] == pc["coverage_id"])
             missing = [t for (t, m, rd) in doc_rows if m and rd > assess_date]
             key = (pol["policy_id"], d["itype"], d["incident_date"])
-            elig, reason = R.assess(
+            checks = R.run_checks(
                 claim_date=claim_date, incident_date=d["incident_date"],
                 policy_start=pol["start_date"], policy_end=pol["end_date"],
-                cancelled_date=pol["cancelled_date"], missing_mandatory=bool(missing),
+                cancelled_date=pol["cancelled_date"], missing_mandatory=missing,
                 is_duplicate=key in seen_keys, excluded=not R.covers(cov_row["exclusions"], d["itype"]),
                 fraud=fscore, claimed_c=claimed_c, limit_c=limit_c)
+            elig, reason = R.decide(checks)               # status is derived from the checks
+            for n, ck in enumerate(checks, 1):
+                T["assessment_check"].append(dict(
+                    check_id=f"CHK-{asm_id[4:]}-{n:02d}", assessment_id=asm_id, claim_id=cid,
+                    check_code=ck["code"], check_name=ck["name"],
+                    result="PASS" if ck["passed"] else "FAIL", observed_value=ck["observed"],
+                    threshold_value=ck["threshold"], reason_code=ck["reason"]))
             a_c = R.assessed_cents(elig, claimed_c, limit_c)
             approved_c = R.allocate_approved(item_c, a_c)
             asm = dict(assessment_id=asm_id, claim_id=cid,
@@ -233,7 +242,7 @@ def build_transactions(master, n_claims=C.DEFAULT_CLAIMS, seed=C.SEED):
             T["assessment"].append(asm)
             reason_for_claim = reason
             T["reserve"].append(dict(reserve_id=ids.reserve_id(cid, 2), claim_id=cid, assessment_id=asm_id,
-                                     reserve_amount=R.reserve_cents(a_c, limit_c, ded_c) / 100,
+                                     reserve_amount=R.reserve_cents(sum(approved_c), limit_c, ded_c) / 100,
                                      version=2, created_date=assess_date))
 
             if elig in ("ELIGIBLE", "PARTIAL"):
@@ -242,7 +251,7 @@ def build_transactions(master, n_claims=C.DEFAULT_CLAIMS, seed=C.SEED):
                 paid = pay_date <= as_of
                 T["settlement"].append(dict(
                     settlement_id=ids.settlement_id(cid, 1), claim_id=cid, assessment_id=asm_id,
-                    settlement_amount=R.settlement_cents(a_c, limit_c, ded_c) / 100,
+                    settlement_amount=R.settlement_cents(sum(approved_c), limit_c, ded_c) / 100,
                     deductible_applied=ded_c / 100, status="PAID" if paid else "APPROVED",
                     payment_date=pay_date if paid else None))
                 if paid:
@@ -322,6 +331,7 @@ def main(argv=None):
     print("  claim status:    ", dict(sorted(Counter(r["status"] for r in txn["claim"]).items())))
     print("  eligibility:     ", dict(sorted(Counter(r["eligibility"] for r in txn["assessment"]).items())))
     print("  reason codes:    ", dict(sorted(Counter(r["reason_code"] for r in txn["assessment"]).items())))
+    print("  failed checks:   ", dict(sorted(Counter(r["check_code"] for r in txn["assessment_check"] if r["result"] == "FAIL").items())))
     return master, txn
 
 
