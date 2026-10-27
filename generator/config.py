@@ -162,3 +162,4 @@ FRAUD_NEAR_LIMIT_RATIO, FRAUD_NEAR_LIMIT_POINTS = 0.90, 20     # claimed amount 
 FRAUD_REPEAT_CLAIMS, FRAUD_REPEAT_POINTS = 3, 25               # 3+ claims by the customer in 12 months
 FRAUD_WINDOW_DAYS = 365
 FRAUD_REFER_THRESHOLD = 50                                      # score >= 50 -> REFER_MANUAL (R09)
+
