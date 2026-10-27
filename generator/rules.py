@@ -3,7 +3,7 @@ these functions, so a decision can never differ between them.
 
 Money is handled in integer cents to avoid floating point drift.
 
-Decision order in assess() (first match wins):
+Decision order = order of CHECKS below (first failed check wins):
   R10 claim date before policy start      -> NOT_ELIGIBLE
   R02 incident before policy start        -> NOT_ELIGIBLE
   R03 incident after policy end           -> NOT_ELIGIBLE
@@ -68,28 +68,121 @@ def fraud_score(report_delay_days, days_since_policy_start, claimed_c, limit_c, 
     return min(score, 100), flags
 
 
-def assess(*, claim_date, incident_date, policy_start, policy_end, cancelled_date,
-           missing_mandatory, is_duplicate, excluded, fraud, claimed_c, limit_c):
-    """Returns (eligibility, reason_code)."""
-    if claim_date < policy_start:
-        return "NOT_ELIGIBLE", R10
-    if incident_date < policy_start:
-        return "NOT_ELIGIBLE", R02
-    if incident_date > policy_end:
-        return "NOT_ELIGIBLE", R03
-    if cancelled_date is not None and incident_date > cancelled_date:
-        return "NOT_ELIGIBLE", R04
-    if missing_mandatory:
-        return "NOT_ELIGIBLE", R05
-    if is_duplicate:
-        return "NOT_ELIGIBLE", R06
-    if excluded:
-        return "NOT_ELIGIBLE", R07
-    if fraud >= C.FRAUD_REFER_THRESHOLD:
-        return "REFER_MANUAL", R09
-    if claimed_c > limit_c:
-        return "PARTIAL", R08
+# The ordered list of eligibility checks. Each check has a stable ID, the reason code it raises
+# when it FAILS, and the eligibility outcome that follows. The first failing check decides.
+CHECKS = [
+    ("C01_CLAIM_ON_OR_AFTER_POLICY_START", R10, "NOT_ELIGIBLE"),
+    ("C02_INCIDENT_ON_OR_AFTER_POLICY_START", R02, "NOT_ELIGIBLE"),
+    ("C03_INCIDENT_ON_OR_BEFORE_POLICY_END", R03, "NOT_ELIGIBLE"),
+    ("C04_POLICY_IN_FORCE_AT_INCIDENT", R04, "NOT_ELIGIBLE"),
+    ("C05_MANDATORY_DOCUMENTS_RECEIVED", R05, "NOT_ELIGIBLE"),
+    ("C06_NOT_A_DUPLICATE_CLAIM", R06, "NOT_ELIGIBLE"),
+    ("C07_INCIDENT_TYPE_COVERED", R07, "NOT_ELIGIBLE"),
+    ("C08_FRAUD_SCORE_BELOW_THRESHOLD", R09, "REFER_MANUAL"),
+    ("C09_CLAIM_WITHIN_LIMIT", R08, "PARTIAL"),
+]
+
+
+def run_checks(*, claim_date, incident_date, policy_start, policy_end, cancelled_date,
+               missing_mandatory, is_duplicate, excluded, fraud, claimed_c, limit_c):
+    """Evaluate EVERY check (not only the first failure). Returns a list of
+    (rule_id, passed, reason_if_failed, outcome_if_failed, detail) in CHECKS order."""
+    passed = [
+        claim_date >= policy_start,
+        incident_date >= policy_start,
+        incident_date <= policy_end,
+        cancelled_date is None or incident_date <= cancelled_date,
+        not missing_mandatory,
+        not is_duplicate,
+        not excluded,
+        fraud < C.FRAUD_REFER_THRESHOLD,
+        claimed_c <= limit_c,
+    ]
+    detail = [
+        f"claim_date={claim_date} policy_start={policy_start}",
+        f"incident_date={incident_date} policy_start={policy_start}",
+        f"incident_date={incident_date} policy_end={policy_end}",
+        f"incident_date={incident_date} cancelled_date={cancelled_date or 'none'}",
+        "missing=" + (",".join(missing_mandatory) if missing_mandatory else "none"),
+        f"duplicate_of_earlier_claim={bool(is_duplicate)}",
+        f"incident_type_excluded={bool(excluded)}",
+        f"fraud_score={fraud} threshold={C.FRAUD_REFER_THRESHOLD}",
+        f"claimed={claimed_c / 100:.2f} limit={limit_c / 100:.2f}",
+    ]
+    return [(rid, ok, reason, outcome, det)
+            for (rid, reason, outcome), ok, det in zip(CHECKS, passed, detail)]
+
+
+# Ordered checks. The FIRST failed check decides the outcome; all checks are still evaluated and
+# logged (table assessment_check), so a claim that fails twice shows both failures.
+CHECKS = [
+    # code,   name,                                   reason if failed, outcome if failed
+    ("CHK01", "CLAIM_AFTER_POLICY_START",             R10, "NOT_ELIGIBLE"),
+    ("CHK02", "INCIDENT_IN_POLICY_TERM",              None, "NOT_ELIGIBLE"),   # R02 (before start) or R03 (after end)
+    ("CHK03", "POLICY_NOT_CANCELLED_BEFORE_INCIDENT", R04, "NOT_ELIGIBLE"),
+    ("CHK04", "MANDATORY_DOCS_COMPLETE",              R05, "NOT_ELIGIBLE"),
+    ("CHK05", "NOT_A_DUPLICATE_CLAIM",                R06, "NOT_ELIGIBLE"),
+    ("CHK06", "INCIDENT_TYPE_COVERED",                R07, "NOT_ELIGIBLE"),
+    ("CHK07", "FRAUD_SCORE_BELOW_THRESHOLD",          R09, "REFER_MANUAL"),
+    ("CHK08", "AMOUNT_WITHIN_LIMIT",                  R08, "PARTIAL"),
+]
+
+
+def _m(c):
+    return f"{c / 100:.2f}"
+
+
+def run_checks(*, claim_date, incident_date, policy_start, policy_end, cancelled_date,
+               missing_mandatory, is_duplicate, excluded, fraud, claimed_c, limit_c):
+    """Evaluates every check. Returns a list of dicts in CHECKS order:
+    code, name, passed, observed, threshold, reason (set only when failed), outcome (only when failed)."""
+    passed = {
+        "CHK01": claim_date >= policy_start,
+        "CHK02": policy_start <= incident_date <= policy_end,
+        "CHK03": cancelled_date is None or incident_date <= cancelled_date,
+        "CHK04": not missing_mandatory,
+        "CHK05": not is_duplicate,
+        "CHK06": not excluded,
+        "CHK07": fraud < C.FRAUD_REFER_THRESHOLD,
+        "CHK08": claimed_c <= limit_c,
+    }
+    observed = {
+        "CHK01": claim_date.isoformat(), "CHK02": incident_date.isoformat(),
+        "CHK03": incident_date.isoformat(),
+        "CHK04": ("missing: " + "|".join(missing_mandatory)) if missing_mandatory else "0 missing",
+        "CHK05": "duplicate" if is_duplicate else "unique",
+        "CHK06": "excluded" if excluded else "covered",
+        "CHK07": str(fraud), "CHK08": _m(claimed_c),
+    }
+    threshold = {
+        "CHK01": f">= {policy_start.isoformat()}",
+        "CHK02": f"{policy_start.isoformat()}..{policy_end.isoformat()}",
+        "CHK03": f"<= {cancelled_date.isoformat()}" if cancelled_date else "no cancellation",
+        "CHK04": "0 missing", "CHK05": "unique", "CHK06": "covered",
+        "CHK07": f"< {C.FRAUD_REFER_THRESHOLD}", "CHK08": f"<= {_m(limit_c)}",
+    }
+    out = []
+    for code, name, reason, outcome in CHECKS:
+        ok = passed[code]
+        if code == "CHK02" and not ok:
+            reason = R02 if incident_date < policy_start else R03
+        out.append(dict(code=code, name=name, passed=ok, observed=observed[code],
+                        threshold=threshold[code], reason=None if ok else reason,
+                        outcome=None if ok else outcome))
+    return out
+
+
+def decide(checks):
+    """Eligibility and reason code come from the FIRST failed check, else ELIGIBLE / R01."""
+    for c in checks:
+        if not c["passed"]:
+            return c["outcome"], c["reason"]
     return "ELIGIBLE", R01
+
+
+def assess(**facts):
+    """Shortcut: run all checks and decide. Returns (eligibility, reason_code)."""
+    return decide(run_checks(**facts))
 
 
 def assessed_cents(eligibility, claimed_c, limit_c):
