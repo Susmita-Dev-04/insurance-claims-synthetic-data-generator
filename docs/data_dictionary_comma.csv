@@ -1,0 +1,106 @@
+entity,field,type,required,allowed_values,unit,unique,key,validation_rule
+Customer,customer_id,string,Yes,CUST-NNNNNN,-,Yes,PK,Zero-padded 6 digits; immutable.
+Customer,full_name,string,Yes,synthetic names only,-,No,,Not empty; max 80 chars; no real personal data.
+Customer,date_of_birth,date,Yes,ISO date YYYY-MM-DD,-,No,,Age on 2026-01-01 between 18 and 80.
+Customer,city,string,Yes,list of Indian cities in config,-,No,,Must be from the configured list.
+Customer,kyc_status,enum,Yes,VERIFIED | PENDING,-,No,,About 95% VERIFIED in baseline.
+Customer,created_date,date,Yes,ISO date YYYY-MM-DD,-,No,,Not later than the earliest policy start_date of this customer.
+Policy,policy_id,string,Yes,POL-<product>-2026-NNNNNN,-,Yes,PK,"Product code must equal the product field; counter zero-padded 6 digits, global sequence."
+Policy,customer_id,string,Yes,existing Customer.customer_id,-,No,FK,Must exist in Customer.
+Policy,product,enum,Yes,AUTO | HLTH | PROP | TRVL | LIAB,-,No,,Same 5 values as claim_type.
+Policy,start_date,date,Yes,ISO date YYYY-MM-DD,-,No,,Between 2024-01-01 and 2026-09-30.
+Policy,end_date,date,Yes,ISO date YYYY-MM-DD,-,No,,end_date > start_date; term is 12 months.
+Policy,status,enum,Yes,ACTIVE | EXPIRED | LAPSED | CANCELLED,-,No,,ACTIVE only if as-of date is within start..end and not cancelled. EXPIRED if end_date < as-of date. LAPSED = non-payment. CANCELLED requires cancelled_date.
+Policy,cancelled_date,date,Conditional,ISO date YYYY-MM-DD,-,No,,"Required when status is CANCELLED or LAPSED, empty otherwise; start_date <= cancelled_date <= end_date."
+Policy,premium,"decimal(12,2)",Yes,>0,INR,No,,Derived from product base rate and sum insured; must be > 0.
+Coverage,coverage_id,string,Yes,COV-<product>-NN,-,Yes,PK,Product code must be a valid product.
+Coverage,claim_type,enum,Yes,AUTO | HLTH | PROP | TRVL | LIAB,-,No,,Claim type this coverage can pay for.
+Coverage,description,string,Yes,free text,-,No,,Not empty.
+Coverage,default_limit,"decimal(12,2)",Yes,>0,INR,No,,Maximum payable per claim by default.
+Coverage,default_deductible,"decimal(12,2)",Yes,>=0,INR,No,,Must be < default_limit.
+Coverage,exclusions,string,Optional,"pipe-separated incident types, e.g. VANDALISM|FLOOD",-,No,,Each value must be a valid incident_type for the same claim_type.
+PolicyCoverage,policy_id,string,Yes,existing Policy.policy_id,-,Part of PK,"PK, FK",Must exist in Policy.
+PolicyCoverage,coverage_id,string,Yes,existing Coverage.coverage_id,-,Part of PK,"PK, FK",Must exist; Coverage.claim_type must equal Policy.product.
+PolicyCoverage,coverage_limit,"decimal(12,2)",Yes,>0,INR,No,,Policy-specific limit; between 50% and 200% of Coverage.default_limit.
+PolicyCoverage,deductible,"decimal(12,2)",Yes,>=0,INR,No,,Less than coverage_limit.
+PolicyCoverage,effective_from,date,Yes,ISO date YYYY-MM-DD,-,No,,Equals Policy.start_date.
+PolicyCoverage,effective_to,date,Yes,ISO date YYYY-MM-DD,-,No,,"Equals Policy.end_date, or the cancelled_date if the policy was cancelled."
+Adjuster,adjuster_id,string,Yes,ADJ-NNN,-,Yes,PK,Zero-padded 3 digits.
+Adjuster,name,string,Yes,synthetic names only,-,No,,Not empty.
+Adjuster,specialization,enum,Yes,AUTO | HLTH | PROP | TRVL | LIAB,-,No,,An adjuster is assigned only to claims of own specialization.
+Adjuster,region,string,Yes,list in config,-,No,,From configured list.
+Adjuster,max_authority,"decimal(12,2)",Yes,>0,INR,No,,Claims above this amount need a senior adjuster (higher max_authority).
+Incident,incident_id,string,Yes,INC-2026-NNNNNN,-,Yes,PK,Zero-padded 6 digits.
+Incident,policy_id,string,Yes,existing Policy.policy_id,-,No,FK,Must exist in Policy.
+Incident,incident_type,enum,Yes,AUTO: COLLISION|THEFT|VANDALISM; HLTH: HOSPITALIZATION|SURGERY|OUTPATIENT; PROP: FIRE|FLOOD|BURGLARY; TRVL: TRIP_CANCELLATION|BAGGAGE_LOSS|MEDICAL_ABROAD; LIAB: THIRD_PARTY_INJURY|THIRD_PARTY_DAMAGE,-,No,,Must belong to the product of the linked policy.
+Incident,incident_date,date,Yes,ISO date YYYY-MM-DD,-,No,,Not in the future (<= as-of date 2026-10-22).
+Incident,location,string,Yes,city name,-,No,,From configured city list.
+Incident,reported_date,date,Yes,ISO date YYYY-MM-DD,-,No,,reported_date >= incident_date.
+Claim,claim_id,string,Yes,CLM-2026-NNNNNN,-,Yes,PK,Zero-padded 6 digits.
+Claim,policy_id,string,Yes,existing Policy.policy_id,-,No,FK,Must exist in Policy.
+Claim,incident_id,string,Optional,existing Incident.incident_id,-,No,FK,"If present, Incident.policy_id must equal Claim.policy_id."
+Claim,claim_type,enum,Yes,AUTO | HLTH | PROP | TRVL | LIAB,-,No,,Must equal Policy.product.
+Claim,claim_date,date,Yes,ISO date YYYY-MM-DD,-,No,,claim_date >= incident_date. Compared against policy start_date by rules (see edge case 'claim date before policy start').
+Claim,claimed_amount,"decimal(12,2)",Yes,>0,INR,No,,Equals the sum of its ClaimItem.claimed_amount.
+Claim,status,enum,Yes,SUBMITTED | DOCS_REQUESTED | UNDER_ASSESSMENT | APPROVED | REJECTED | SETTLED | CLOSED,-,No,,Current status = to_status of the latest ClaimStatusEvent. Transitions must follow the lifecycle in Enums.
+Claim,decision_reason,enum,Optional,reason codes (see Enums),-,No,,Required when status is REJECTED or APPROVED; equals Assessment.reason_code.
+ClaimItem,claim_item_id,string,Yes,ITM-<claim-id>-NNN,-,Yes,PK,Counter restarts at 001 for each claim.
+ClaimItem,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must exist in Claim.
+ClaimItem,coverage_id,string,Yes,existing Coverage.coverage_id,-,No,FK,Must be a coverage included in the claim's policy (exists in PolicyCoverage).
+ClaimItem,item_type,string,Yes,"e.g. REPAIR, HOSPITAL_BILL, REPLACEMENT, LEGAL_FEE",-,No,,Not empty.
+ClaimItem,claimed_amount,"decimal(12,2)",Yes,>0,INR,No,,Sum over items equals Claim.claimed_amount.
+ClaimItem,approved_amount,"decimal(12,2)",Optional,>=0,INR,No,,Empty until assessed; approved_amount <= claimed_amount.
+Document,document_id,string,Yes,DOC-<claim-id>-NNN,-,Yes,PK,Counter restarts at 001 per claim.
+Document,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must exist in Claim.
+Document,doc_type,enum,Yes,CLAIM_FORM | ID_PROOF | INCIDENT_REPORT | POLICE_REPORT | MEDICAL_REPORT | INVOICE | PHOTOS | REPAIR_ESTIMATE,-,No,,Which types are mandatory depends on claim_type (see Enums).
+Document,is_mandatory,boolean,Yes,TRUE | FALSE,-,No,,Derived from the mandatory-document rule for the claim_type.
+Document,status,enum,Yes,REQUESTED | RECEIVED | VERIFIED | REJECTED,-,No,,RECEIVED/VERIFIED require received_date.
+Document,received_date,date,Conditional,ISO date YYYY-MM-DD,-,No,,Empty while REQUESTED; otherwise >= claim_date.
+ClaimAssignment,assignment_id,string,Yes,ASN-<claim-id>-NNN,-,Yes,PK,"Counter restarts at 001 per claim; a reassignment creates 002, not an update."
+ClaimAssignment,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must exist in Claim.
+ClaimAssignment,adjuster_id,string,Yes,existing Adjuster.adjuster_id,-,No,FK,"Adjuster.specialization must equal claim_type; claimed_amount <= max_authority, otherwise a senior adjuster."
+ClaimAssignment,assigned_date,date,Yes,ISO date YYYY-MM-DD,-,No,,assigned_date >= claim_date.
+ClaimAssignment,status,enum,Yes,ASSIGNED | REASSIGNED | COMPLETED,-,No,,Only the latest assignment of a claim is ASSIGNED or COMPLETED.
+Assessment,assessment_id,string,Yes,ASM-<claim-id>-NNN,-,Yes,PK,Counter restarts at 001 per claim.
+Assessment,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must exist in Claim.
+Assessment,assignment_id,string,Yes,existing ClaimAssignment.assignment_id,-,No,FK,Must belong to the same claim_id.
+Assessment,eligibility,enum,Yes,ELIGIBLE | NOT_ELIGIBLE | PARTIAL | REFER_MANUAL,-,No,,"Derived from the rules only (coverage dates, exclusions, documents, duplicates, fraud score)."
+Assessment,reason_code,enum,Yes,see Enums (R01..R10),-,No,,Every decision has exactly one primary reason code.
+Assessment,assessed_amount,"decimal(12,2)",Yes,>=0,INR,No,,Sum of ClaimItem.approved_amount; 0 if NOT_ELIGIBLE.
+Assessment,fraud_score,integer,Yes,0 to 100,points,No,,"Sum of indicator points (late reporting over 14 days +20, incident within 30 days of policy start +25, amount at least 90% of limit +20, 3+ claims by the customer in 12 months +25). Score of 50 or more = REFER_MANUAL. Computed from data, not random."
+Assessment,assessed_date,date,Yes,ISO date YYYY-MM-DD,-,No,,assessed_date >= assigned_date of the linked assignment.
+AssessmentCheck,check_id,string,Yes,CHK-<claim-id>-NNN-NN,-,Yes,PK,Middle counter is the assessment sequence of the claim; last 2 digits are the check number 01 to 08.
+AssessmentCheck,assessment_id,string,Yes,existing Assessment.assessment_id,-,No,FK,Must exist in Assessment.
+AssessmentCheck,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must equal Assessment.claim_id.
+AssessmentCheck,check_code,enum,Yes,CHK01 | CHK02 | CHK03 | CHK04 | CHK05 | CHK06 | CHK07 | CHK08,-,No,,Exactly one row per code per assessment (8 rows).
+AssessmentCheck,check_name,string,Yes,see Enums (check codes),-,No,,Fixed name of the check.
+AssessmentCheck,result,enum,Yes,PASS | FAIL,-,No,,Recomputed from source data by generator/rederive.py; must match.
+AssessmentCheck,observed_value,string,Yes,text,-,No,,"The fact that was tested (a date, an amount, a score)."
+AssessmentCheck,threshold_value,string,Yes,text,-,No,,The rule limit that the observed value was compared with.
+AssessmentCheck,reason_code,enum,Conditional,R02..R10,-,No,,Set only when result is FAIL. The first FAIL in code order decides Assessment.reason_code.
+Reserve,reserve_id,string,Yes,RSV-<claim-id>-NNN,-,Yes,PK,Counter restarts at 001 per claim; each change is a new version row.
+Reserve,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must exist in Claim.
+Reserve,assessment_id,string,Optional,existing Assessment.assessment_id,-,No,FK,Empty for the first (preliminary) reserve created before assessment.
+Reserve,reserve_amount,"decimal(12,2)",Yes,>=0,INR,No,,"= max(0, min(claimed_amount, coverage_limit) - deductible). Never above coverage_limit."
+Reserve,version,integer,Yes,>=1,-,No,,"Consecutive per claim, starting at 1."
+Reserve,created_date,date,Yes,ISO date YYYY-MM-DD,-,No,,created_date >= claim_date; non-decreasing with version.
+Settlement,settlement_id,string,Yes,SET-<claim-id>-NNN,-,Yes,PK,Counter restarts at 001 per claim.
+Settlement,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must exist in Claim.
+Settlement,assessment_id,string,Yes,existing Assessment.assessment_id,-,No,FK,Assessment must be ELIGIBLE or PARTIAL.
+Settlement,settlement_amount,"decimal(12,2)",Yes,>=0,INR,No,,"= max(0, min(assessed_amount, coverage_limit) - deductible_applied). Must not exceed coverage_limit."
+Settlement,deductible_applied,"decimal(12,2)",Yes,>=0,INR,No,,Equals PolicyCoverage.deductible for the claim's coverage.
+Settlement,status,enum,Yes,PROPOSED | APPROVED | PAID | CANCELLED,-,No,,A claim has at most one PAID settlement in baseline data.
+Settlement,payment_date,date,Conditional,ISO date YYYY-MM-DD,-,No,,Required when status is PAID; payment_date >= assessed_date.
+ClaimStatusEvent,event_id,string,Yes,EVT-<claim-id>-NNN,-,Yes,PK,Append-only; never updated or deleted.
+ClaimStatusEvent,claim_id,string,Yes,existing Claim.claim_id,-,No,FK,Must exist in Claim.
+ClaimStatusEvent,from_status,enum,Optional,same as Claim.status,-,No,,Empty only for the first event of a claim.
+ClaimStatusEvent,to_status,enum,Yes,same as Claim.status,-,No,,"(from_status, to_status) must be an allowed transition."
+ClaimStatusEvent,event_timestamp,timestamp,Yes,ISO 8601 timestamp (UTC),-,No,,Strictly increasing per claim.
+ClaimStatusEvent,reason,string,Yes,reason code or short text,-,No,,Never empty: every decision has a reason.
+ground_truth (separate file),claim_id,string,Yes,existing Claim.claim_id,-,No,reference only,Join key to Claim. Not a foreign key constraint.
+ground_truth (separate file),issue_type,enum,Yes,NONE | CLAIM_BEFORE_POLICY_START | POLICY_CANCELLED_BEFORE_INCIDENT | DUPLICATE_INCIDENT | SETTLEMENT_EXCEEDS_LIMIT | MISSING_MANDATORY_DOC | CLAIM_PAID_TWICE | INCIDENT_OUTSIDE_COVERAGE | OVER_LIMIT_CLAIM | SUSPECTED_FRAUD,-,No,,Exactly one primary label per row; NONE for clean claims.
+ground_truth (separate file),expected_eligibility,enum,Yes,ELIGIBLE | NOT_ELIGIBLE | PARTIAL | REFER_MANUAL,-,No,,What a correct system should decide.
+ground_truth (separate file),expected_reason_code,enum,Yes,R01..R10,-,No,,Expected reason code.
+ground_truth (separate file),expected_settlement_amount,"decimal(12,2)",Yes,>=0,INR,No,,Expected correct payable amount.
+ground_truth (separate file),injected,boolean,Yes,TRUE | FALSE,-,No,,TRUE if the anomaly was deliberately injected.
+ground_truth (separate file),injected_in_table,string,Optional,table name,-,No,,Which table was modified; unrelated rows are never touched.
