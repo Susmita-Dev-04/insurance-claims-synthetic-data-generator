@@ -1,0 +1,36 @@
+claim_id,category,expected,actual
+CLM-2026-000003,eligibility,NOT_ELIGIBLE,ELIGIBLE
+CLM-2026-000003,reason code,R10_CLAIM_BEFORE_POLICY_START,R01_OK
+CLM-2026-000003,assessment_check log,"[('CHK01', False), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]","[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]"
+CLM-2026-000003,assessed amount,0,"(24064000, 24064000)"
+CLM-2026-000003,settlement on a claim that is not payable,0,1
+CLM-2026-000004,eligibility,NOT_ELIGIBLE,ELIGIBLE
+CLM-2026-000004,reason code,R04_CANCELLED_BEFORE_INCIDENT,R01_OK
+CLM-2026-000004,assessment_check log,"[('CHK01', True), ('CHK02', True), ('CHK03', False), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]","[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]"
+CLM-2026-000004,assessed amount,0,"(8542000, 8542000)"
+CLM-2026-000004,settlement on a claim that is not payable,0,1
+CLM-2026-000005,settlement amount,36352000,160010000
+CLM-2026-000005,settlement above limit,160000000,160010000
+CLM-2026-000006,eligibility,NOT_ELIGIBLE,ELIGIBLE
+CLM-2026-000006,reason code,R05_MISSING_MANDATORY_DOC,R01_OK
+CLM-2026-000006,assessment_check log,"[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', False), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]","[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]"
+CLM-2026-000006,assessed amount,0,"(4958000, 4958000)"
+CLM-2026-000006,settlement on a claim that is not payable,0,1
+CLM-2026-000007,settlement count,1,2
+CLM-2026-000008,eligibility,NOT_ELIGIBLE,ELIGIBLE
+CLM-2026-000008,reason code,R05_MISSING_MANDATORY_DOC,R01_OK
+CLM-2026-000008,assessment_check log,"[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', False), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]","[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]"
+CLM-2026-000008,assessed amount,0,"(14386000, 14386000)"
+CLM-2026-000008,settlement on a claim that is not payable,0,1
+CLM-2026-000030,fraud score,45,0
+CLM-2026-000030,eligibility,NOT_ELIGIBLE,ELIGIBLE
+CLM-2026-000030,reason code,R06_DUPLICATE_CLAIM,R01_OK
+CLM-2026-000030,assessment_check log,"[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', False), ('CHK06', True), ('CHK07', True), ('CHK08', True)]","[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]"
+CLM-2026-000030,assessed amount,0,"(15962000, 15962000)"
+CLM-2026-000030,settlement on a claim that is not payable,0,1
+CLM-2026-000110,fraud score,65,45
+CLM-2026-000110,eligibility,REFER_MANUAL,ELIGIBLE
+CLM-2026-000110,reason code,R09_FRAUD_REVIEW,R01_OK
+CLM-2026-000110,assessment_check log,"[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', False), ('CHK08', True)]","[('CHK01', True), ('CHK02', True), ('CHK03', True), ('CHK04', True), ('CHK05', True), ('CHK06', True), ('CHK07', True), ('CHK08', True)]"
+CLM-2026-000110,settlement on a claim that is not payable,0,1
+CLM-2026-000110,status vs manual referral,UNDER_ASSESSMENT,CLOSED

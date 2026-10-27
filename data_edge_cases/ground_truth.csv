@@ -1,0 +1,9 @@
+edge_case_id,claim_id,anomaly_type,table_name,record_id,description,expected_rule,expected_outcome
+EDGE-001,CLM-2026-000003,CLAIM_DATE_BEFORE_POLICY_START,claim,CLM-2026-000003,Claim date changed from 2025-04-28 to one day before policy start (2025-03-06).,CHK01 / R10_CLAIM_BEFORE_POLICY_START,NOT_ELIGIBLE
+EDGE-002,CLM-2026-000004,POLICY_CANCELLED_BEFORE_INCIDENT,policy,POL-LIAB-2026-000082,"Cancellation date set to 2025-04-21, one day before incident 2025-04-22.",CHK03 / R04_CANCELLED_BEFORE_INCIDENT,NOT_ELIGIBLE
+EDGE-003,CLM-2026-000030,DUPLICATE_CLAIM,incident,INC-2026-000029,Incident key changed to match earlier claim CLM-2026-000008 under the same policy.,CHK05 / R06_DUPLICATE_CLAIM,NOT_ELIGIBLE
+EDGE-004,CLM-2026-000005,SETTLEMENT_EXCEEDS_LIMIT,settlement,SET-CLM-2026-000005-001,"Settlement amount set to ₹1600100.00, which is ₹100 above the coverage limit of ₹1600000.00.",Settlement amount must not exceed coverage limit,FLAG_SETTLEMENT_OVER_LIMIT
+EDGE-005,CLM-2026-000006,MISSING_MANDATORY_DOCUMENT,document,DOC-CLM-2026-000006-001,Mandatory document CLAIM_FORM was removed.,CHK04 / R05_MISSING_MANDATORY_DOC,NOT_ELIGIBLE
+EDGE-006,CLM-2026-000007,CLAIM_PAID_TWICE,settlement,SET-CLM-2026-000007-002,Duplicated paid settlement SET-CLM-2026-000007-001; claim now has more than one settlement record.,Exactly one settlement per payable claim,FLAG_DUPLICATE_SETTLEMENT
+EDGE-007,CLM-2026-000110,FRAUD_INDICATOR,incident,INC-2026-000112,"Reported date set to 15 days after the incident. Together with the new-policy and near-limit indicators, this should trigger manual fraud review.",CHK07 / R09_FRAUD_REVIEW,REFER_MANUAL
+EDGE-008,CLM-2026-000008,INCOMPLETE_EVIDENCE,document,DOC-CLM-2026-000008-001,Mandatory document CLAIM_FORM is now received one day after assessment date 2025-05-24.,CHK04 / R05_MISSING_MANDATORY_DOC,NOT_ELIGIBLE

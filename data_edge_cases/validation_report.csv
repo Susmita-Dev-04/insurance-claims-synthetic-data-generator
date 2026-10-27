@@ -1,0 +1,4 @@
+severity,table_name,record_id,category,details
+ERROR,claim,CLM-2026-000008,DUPLICATE_CLAIM_KEY,"Duplicate policy/incident-type/incident-date key: ('POL-LIAB-2026-000118', 'THIRD_PARTY_DAMAGE', '2025-05-04'); claims=['CLM-2026-000008', 'CLM-2026-000030']."
+ERROR,claim,CLM-2026-000030,DUPLICATE_CLAIM_KEY,"Duplicate policy/incident-type/incident-date key: ('POL-LIAB-2026-000118', 'THIRD_PARTY_DAMAGE', '2025-05-04'); claims=['CLM-2026-000008', 'CLM-2026-000030']."
+ERROR,settlement,CLM-2026-000007,MULTIPLE_SETTLEMENTS,Found 2 settlement records for one claim.
