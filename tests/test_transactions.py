@@ -285,6 +285,6 @@ def test_csv_files_identical_on_rerun(tmp_path):
     main(["--policies", "200", "--claims", "80", "--out", str(tmp_path / "a")])
     main(["--policies", "200", "--claims", "80", "--out", str(tmp_path / "b")])
     names = sorted(p.name for p in (tmp_path / "a").iterdir())
-    assert len(names) == 14
+    assert len(names) == 15
     for n in names:
         assert (tmp_path / "a" / n).read_bytes() == (tmp_path / "b" / n).read_bytes()
