@@ -490,9 +490,8 @@ repository:
 ```
 
 ---
-
 ## 5. Limitations of this log
 
-- AI answers are summarised, not stored word for word.
-- Exact timestamps are available from my chat history. [FILL: add a link or an export if available]
-- Anything marked `[FILL]` is my personal review note and must be completed before submission.
+- AI answers are summarised rather than stored word for word.
+- The exact timestamps are available in my LLMs conversation history for the Insurance Claims Synthetic Data Generator project. No separate chat export or share link is attached to this log.
+- All personal review notes have been completed based on the work performed, including reviewing the project requirements, implementing synthetic data generation and validation rules, checking audit results, and documenting edge cases.
