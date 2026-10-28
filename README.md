@@ -11,8 +11,9 @@
   <strong>Audit & Edge-Case Testing</strong>
 </p>
 
-</div>
+### 🌐 [View Live Summary Report](https://insurance-claims-synthetic-data-generator.onrender.com)
 
+</div>
 ---
 
 ## 📌 Project Overview
@@ -23,11 +24,7 @@ The project generates a clean baseline dataset and a separate edge-case dataset 
 
 The goal is not only to generate CSV files. It is to make the data **traceable, reproducible, explainable, and testable**—from policy and incident records through claim decisions, assessments, reserves, settlements, and status history.
 
-## 🌐 Live Summary Report
 
-Explore the generated insurance claims data summary, validation results, and audit insights through the live report.
-
-👉 [**View Live Summary Report**](https://insurance-claims-synthetic-data-generator.onrender.com)
 
 ### Why this project matters
 
