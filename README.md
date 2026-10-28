@@ -14,7 +14,6 @@
 ### 🌐 [View Live Summary Report](https://insurance-claims-synthetic-data-generator.onrender.com)
 
 </div>
----
 
 ## 📌 Project Overview
 
