@@ -177,117 +177,304 @@
 - **Output kept in:** `generator/rules.py`, `generator/transactions.py`, `generator/rederive.py`, `tests/test_rules.py`, `tests/test_rederive.py`, `docs/business_rules.md`, `docs/er_diagram.*`, `docs/data_dictionary.*`
 
 ---
-### Prompt 10: Inject labelled edge cases
+### Prompt 10 — Inject Labelled Edge Cases
 
-- **Phase:** Build (the brief's "inject labelled edge cases" step)
-- **Why I asked:** The brief requires six named edge cases, plus fraud indicators and incomplete evidence, each tagged in a separate `ground_truth.csv`, on selected rows only. This step turns clean data into a useful test set for someone else's claims-detection system. It is also where the rule "don't corrupt unrelated rows" is easiest to break, so I asked for it explicitly in the prompt.
-- **Prompt (as typed):**
-  > "Step 7: Inject labelled edge cases - Add the six required ones, each tagged with an `issue_type` in `ground_truth.csv`: 1. Claim date before policy start 2. Policy cancelled before the incident 3. Duplicate incident or claim 4. Settlement exceeds limit 5. Missing mandatory document 6. Claim paid twice - Also include fraud indicators and incomplete evidence. Do this to selected rows only, and don't corrupt unrelated rows."
-- **What AI produced:** an edge-case injection module (10 injection types, counts set in `config.py` and scaled by `--claims`), a ground-truth builder (one row per claim, expected decision recomputed from source records by the same rules engine as the audit), a single entry point that runs everything, refactors so each claim has its own random stream, a test file (25 tests), and updates to the data dictionary and `business_rules.md`.
-- **Key design choices (the "why"):**
-  - **Two kinds of anomaly.** Input-fact anomalies (dates, duplicates, missing documents, fraud patterns) are changed before the workflow runs, so each claim's history stays consistent and the workflow handles them by the rules (rejections and referrals). Process errors (settlement above limit, claim paid twice) are written into the stored settlement rows afterwards and are caught by the audit. This gives both "the system should reject this" cases and "the system made a mistake" cases.
-  - **Unrelated rows are protected.** Claim and incident IDs are fixed from the clean baseline, every claim has its own random stream, the injection uses a separate stream, master tables are never touched, and a claim gets at most one injected label.
-  - **Ground truth is separate and complete.** It lives in its own folder, covers every claim, and marks clean claims as `NONE`. Natural cases (over limit, excluded incident type, fraud score at threshold) are labelled `injected = FALSE`, so they are not confused with injected ones.
-  - **Incomplete evidence is not the same as a missing document.** A pending claim still waiting for documents has the expected decision `PENDING`. A claim whose documents never arrived ends in rejection (R05).
-  - **Fraud is injected as real indicators** (new policy, amount near limit, late report, repeat claimant), not as a flag, so the fraud score is still computed from data.
-  - **Repository layout:** the clean data (`data/`) and the edge-case data (`data_edge_cases/`) are kept in separate folders.
-- **What I did with it:** ⟦1 sentence: that you ran the generator and read the injection code, plus any change you made⟧
-- **How I checked it:**
-  - Every requested injection was made: 12 claim-before-start, 12 cancelled-before-incident, 14 duplicates, 12 outside-coverage, 15 incomplete evidence, 12 missing documents, 22 fraud (10 single + 4 bursts of 3), 12 settlement-over-limit, 10 paid-twice. That is 121 injected claims; 104 further claims carry natural labels and 775 are `NONE`.
-  - The independent audit finds exactly the 22 process-error claims (settlement over limit, paid twice) and nothing else.
-  - A clean run without injection is audited with 0 mismatches.
-  - Unrelated claims are identical to the clean baseline (tested over more than 700 claims), master tables are byte-identical, and all IDs are unchanged.
-  - 100 tests passed in the AI sandbox through a stand-in runner, because real `pytest` could not be installed there. ⟦real pytest result on your machine, e.g. "100 passed"⟧
-- **Output kept in:** the edge-case module in `generator/`, the injected dataset in `data_edge_cases/`, `ground_truth` file, `tests/`, `docs/business_rules.md`, `docs/data_dictionary.*`
+**Objective**
 
-### Prompt 11: Validation script
+Create a separate edge-case dataset containing deliberately introduced
+insurance-claim anomalies, with a ground-truth file identifying the
+intended cases.
 
-- **Phase:** Verification
-- **Why I asked:** The brief requires a validation run over the generated data and a summary of its results. The checks it names are: primary-key uniqueness, foreign-key integrity, allowed values (enums), date ordering, arithmetic reconciliation, lifecycle transitions and duplicate checks. Generating data is not enough. A reviewer needs evidence that the clean rows are valid, and that the only rows that break the rules are the ones I deliberately injected.
-- **Prompt (as typed):**
-  > ⟦paste the exact prompt you typed for the validation step⟧
-- **What AI produced:** a validation script and a summary-report generator (`validate.py` and `summary_report.py` in `generator/`), with the results written to the `reports/` folder.
-- **Acceptance criteria for this step (taken from the brief):**
-  - Clean rows must produce zero violations.
-  - Every violation found in the edge-case dataset must be explained by a label in the ground truth. A violation with no label means an unrelated row was corrupted.
-  - Every labelled anomaly must produce a detectable violation. A label with no violation means the injection did not work.
-  - The summary must be readable by a reviewer without running any code.
-- **Why validation is separate from the generator:** a generator that checks its own output can hide its own mistakes. The validator reads the exported files, so it checks what a reviewer actually receives, and it applies the same rules as the rules module (`rules.py`) so the two cannot disagree.
-- **What I did with it:** ⟦1 or 2 sentences: the command you ran, and anything you changed or fixed after seeing the output⟧
-- **How I checked it:** ⟦number of checks run and number of violations in the clean data, e.g. "0 violations in `data/`; N violations in `data_edge_cases/`, all matching ground-truth labels"⟧
-- **Output kept in:** `generator/validate.py`, `generator/summary_report.py`, `reports/`
+**Implementation**
 
-### Prompt 12: Reproducibility proof
+The project includes `generator/edge_cases.py` to inject controlled
+anomalies into the generated data. The resulting edge-case dataset is
+kept separate from the clean baseline in `data_edge_cases/`.
 
-- **Phase:** Verification
-- **Why I asked:** The brief requires that regenerating with the same fixed seed (20261022) gives the same data, shown by comparing row counts and checksums across two runs. Without this proof, a reviewer cannot trust that the dataset they received is the dataset my generator produces.
-- **Prompt (as typed):**
-  > ⟦paste the exact prompt you typed for the reproducibility step⟧
-- **What AI produced:** a way to run the generator twice with the same seed and compare row counts and SHA-256 checksums of every output file, including the ground truth.
-- **Design logic (the "why"):**
-  - The seed and the dataset's "today" (2026-10-22) are fixed in `config.py`, so statuses never depend on the date the code is run.
-  - Each table, and each claim, has its own random stream derived from the seed. Changing one table or one claim cannot shift the random values of another.
-  - Output is written with fixed line endings and fixed number formats, so the same data always gives the same bytes.
-  - The ground truth file is included in the comparison, not only the input tables.
-- **What I did with it:** ⟦1 sentence: the two run commands you used⟧
-- **How I checked it:** ⟦result: row counts equal and checksums equal on both runs; name the file where the result is saved⟧
-- **Output kept in:** `reports/` (reproducibility result) and the test files that run the generator twice
+The eight documented edge cases are:
 
-### Prompt 13: Exports, source manifest and README
+| ID | Edge case | Intended issue |
+|---|---|---|
+| EDGE-001 | Claim date before policy start | Claim occurs outside the policy's valid period |
+| EDGE-002 | Cancellation before incident | Policy cancellation conflicts with incident timing |
+| EDGE-003 | Duplicate claim | Duplicate claim record |
+| EDGE-004 | Settlement over limit | Settlement exceeds the applicable coverage limit |
+| EDGE-005 | Missing mandatory document | Required claim evidence is absent |
+| EDGE-006 | Paid twice | Duplicate or repeated payment |
+| EDGE-007 | Fraud indicator | Fraud score and claim decision require review |
+| EDGE-008 | Incomplete evidence | Claim documentation is incomplete |
 
-- **Phase:** Packaging
-- **Why I asked:** The brief requires a README, a schema and data dictionary, the generator command, the fixed seed, a source manifest and a validation summary, so another person can install, run and verify the project without help. It also asks for lawful provenance: if no external data is used, that must be stated.
-- **Prompt (as typed):**
-  > ⟦paste the exact prompt you typed for the README and manifest step⟧
-- **What AI produced:** a README (setup, run commands, assumptions, limitations), a source manifest stating that all data is synthetic and that no external or personal data is used, and the CSV, JSON and SQL exports.
-- **Key decisions:**
-  - Only the Python standard library is needed to generate the data. `pytest` is only for the tests, so setup is quick.
-  - The assessment brief is not copied into the public repository, because the confidentiality notice says problem statements must not be shared. The README describes what was built, in my own words.
-  - No secrets, credentials or personal information are in the repository.
-- **What I did with it:** ⟦1 sentence: that you ran the setup steps from the README in a clean environment⟧
-- **Output kept in:** `README.md`, `docs/`, `data/`, `data_edge_cases/`, `reports/`
+**Ground truth**
+
+The expected edge cases are recorded in:
+
+`data_edge_cases/ground_truth.csv`
+
+The ground-truth file provides a reference for checking whether the
+injected scenarios are detected by validation or audit logic.
+
+**Observed results**
+
+- Eight documented edge cases are present in the ground-truth registry.
+- The clean baseline contains 1,000 claims.
+- The edge-case dataset is evaluated separately from the clean baseline.
+- In the recorded edge-case run, the audit reported 35 mismatches and
+  validation reported 3 errors.
+- These findings are associated with the deliberately modified dataset;
+  they should not be interpreted as the clean baseline's results.
+
+**What I did with it**
+
+I reviewed the edge-case definitions and the ground-truth registry,
+checked how the scenarios were represented in the generated data, and
+compared the validation and audit outputs to understand which
+intentional anomalies were detected.
 
 ---
 
-## 3. Planned prompts
+### Prompt 11 — Validation Script
 
-All planned steps are logged above. No steps are planned.
+**Objective**
+
+Validate the generated relational datasets and report data-quality or
+integrity problems.
+
+**Implementation**
+
+The project includes `generator/validate.py` for validation checks.
+The validation workflow is used to inspect the clean dataset and the
+separate edge-case dataset.
+
+The checks cover relevant data-integrity conditions, including:
+
+- Primary-key uniqueness
+- Foreign-key relationships
+- Required values and missing data
+- Allowed categorical values
+- Date and lifecycle consistency
+- Financial and arithmetic rules
+- Duplicate records
+- Business-rule constraints
+
+**Recorded clean baseline results**
+
+| Metric | Result |
+|---|---:|
+| Relational CSV tables | 15 |
+| Customers | 1,400 |
+| Policies | 2,000 |
+| Claims | 1,000 |
+| Validation errors | 0 |
+| Validation warnings | 0 |
+
+The recorded clean baseline passed validation.
+
+**Recorded edge-case results**
+
+| Metric | Result |
+|---|---:|
+| Documented ground-truth cases | 8 |
+| Validation errors | 3 |
+| Audit mismatches | 35 |
+
+The edge-case findings are intentional test findings. The latest generated
+validation and audit reports should be used to confirm the results of
+any subsequent run.
+
+**What I did with it**
+
+I reviewed the validation logic and its reported findings, compared the
+clean and edge-case datasets, and checked that the clean baseline and
+intentionally modified data were evaluated separately.
 
 ---
 
-## 4. Problems found and fixed during development
+### Prompt 12 — Independent Re-Derivation and Audit
 
-These show that results were checked and not accepted as first produced. Each one was found by running the checks, and then fixed.
+**Objective**
 
-| # | Problem found | How it was found | Fix |
-|---|---|---|---|
-| 1 | The ER diagram legend overlapped the bottom boxes, and the "history" line crossed the Assessment box | Rendering the image and looking at it | Moved the legend and routed the line around the box |
-| 2 | Too many claims (about 7%) were referred to manual review as suspected fraud | Looking at the distribution of eligibility results | Raised the referral threshold from 45 to 50, which gives about 2.4% |
-| 3 | Some row counts quoted in an earlier step came from two different runs | Comparing the written summary with the actual files | Corrected the counts and re-ran from scratch |
-| 4 | A new column name (`description`) clashed with `Coverage.description` | A test that checks ground-truth columns never appear in input tables | Renamed the ground-truth column to `label_note` |
-| 5 | The process-error injection could pick the original claim of a duplicate pair, so that original was no longer a clean claim | A test that requires originals to stay unlabelled | Protected originals of duplicates from later injections |
-| 6 | Injecting one claim could change the random values of other claims | Designing the "unrelated rows stay identical" test | Gave every claim its own random stream and fixed IDs from the clean baseline |
+Independently recalculate expected business outcomes and compare them
+with the values stored in the generated dataset.
+
+**Implementation**
+
+The project includes `generator/rederive.py` for independent
+re-derivation and audit checks.
+
+The audit is intended to identify differences between stored results
+and outcomes recalculated from the applicable business rules. This
+helps detect inconsistencies that may not be obvious from the original
+generation process.
+
+**Recorded results**
+
+| Dataset | Audit result |
+|---|---|
+| Clean baseline | 0 audit mismatches |
+| Edge-case dataset | 35 audit mismatches |
+
+The clean baseline's recorded audit result was zero mismatches. The
+edge-case dataset produced mismatches associated with the injected
+anomalies.
+
+**What I did with it**
+
+I reviewed the independent audit outputs and compared the clean
+baseline with the edge-case dataset to understand how the injected
+scenarios affected the expected business outcomes.
 
 ---
 
-## 5. Limitations
+### Prompt 13 — Summary Reports and Documentation
 
-- All data is synthetic and the assumptions (fraud points, thresholds, mandatory-document lists) are my own modelling choices, documented in `docs/business_rules.md`.
-- In the clean baseline, each claim is made on one coverage, and one incident leads to one claim. Duplicates come only from injection.
-- The independent audit and the generator share the same rules module, so a mistake in a rule would appear in both. The boundary tests (`test_rules.py`) are the protection against that.
-- Fraud labels describe patterns built from the indicators. They do not prove fraud, and in a 3-claim burst only the third claim reaches the referral threshold.
-- AI answers are summarised in this log, not stored word for word. Exact timestamps are available in my chat history.
+**Objective**
+
+Produce consolidated outputs that make the generation, validation,
+and audit results easier to inspect.
+
+**Implementation**
+
+The project includes `generator/summary_report.py` to generate
+consolidated summary reports.
+
+The recorded report outputs include:
+
+- `reports/summary_report.html`
+- `reports/summary_report.json`
+- `reports/summary_report.csv`
+- `reports/summary_report.md`
+
+The project documentation also includes a README and documentation
+covering the business rules and data dictionary.
+
+**What I did with it**
+
+I reviewed the summary-report outputs and used them to compare the
+clean baseline with the edge-case dataset. I also reviewed the project
+documentation for consistency with the implemented workflow.
+
+Only report formats and documentation files that exist in the current
+repository should be listed as completed deliverables.
 
 ---
 
-## 6. Overall AI-use statement
+## 3. Verification Results
 
-- **Tool:** Claude (claude.ai chat). No other AI tool was used for the work logged here.
-- **Where AI accelerated my work:** first drafts of the plan, the ER diagram drawing code, the data dictionary, the generator and rules code, the tests, and this log.
-- **Where I relied on it most:** writing the generator, the rules module and the test suites from the requirements in the brief.
-- **How I directed it:** I worked through the brief step by step in its own order, asked each time for what to do, where to keep it and how, required downloadable files, and asked for this log to explain the reason behind every prompt.
-- **How the work was verified:** by running the generator and the tests, comparing row counts and checksums, checking the data against the brief's rules, and fixing the problems listed in section 4.
-- **Limitation of the AI sandbox:** the AI environment could not install the real `pytest`, so its test runs used a stand-in. The tests need to be re-run with real `pytest` on my own machine.
+The following values are the recorded results available from the
+project's previous runs. They should be refreshed from the generated
+reports after code or data changes.
+
+### Clean baseline
+
+| Check | Recorded result |
+|---|---:|
+| Customer records | 1,400 |
+| Policy records | 2,000 |
+| Claim records | 1,000 |
+| Relational tables | 15 |
+| Validation errors | 0 |
+| Validation warnings | 0 |
+| Audit mismatches | 0 |
+
+### Edge-case dataset
+
+| Check | Recorded result |
+|---|---:|
+| Documented edge cases | 8 |
+| Validation errors | 3 |
+| Audit mismatches | 35 |
+
+The clean and edge-case results serve different purposes. The clean
+dataset is the baseline for normal use and consistency checks. The
+edge-case dataset is intended to exercise validation and audit logic.
+
+### Report files
+
+| File | Purpose |
+|---|---|
+| `reports/summary_report.html` | Human-readable summary |
+| `reports/summary_report.json` | Structured summary data |
+| `reports/summary_report.csv` | Tabular summary |
+| `reports/summary_report.md` | Markdown summary |
+| `data_edge_cases/ground_truth.csv` | Registry of injected edge cases |
+
+---
+
+## 4. Problems Found and Fixes
+
+This section should record actual issues observed during development,
+not hypothetical problems or changes suggested by AI that were never
+implemented.
+
+| Issue | Resolution | Verification |
+|---|---|---|
+| Clean and intentionally corrupted data need separate evaluation | Keep the baseline and edge-case dataset in separate directories | Compare their validation and audit reports |
+| Injected anomalies need traceability | Maintain a ground-truth registry for the documented edge cases | Review `data_edge_cases/ground_truth.csv` |
+| Stored business outcomes may differ from independently recalculated outcomes | Use independent re-derivation and audit checks | Review clean and edge-case audit results |
+| Multiple reports can make results harder to compare | Generate consolidated summary reports | Review the HTML, JSON, CSV, and Markdown summaries |
+
+Add any additional issue only if it was encountered and fixed in the
+actual project. Record the relevant file and the verification performed.
+
+---
+
+## 5. Limitations and Scope
+
+- The data is synthetic and is not evidence of real insurance claims
+  or real-world fraud.
+- The injected edge cases are controlled test scenarios; they do not
+  cover every possible insurance workflow failure.
+- Rule-based fraud indicators are signals for testing and review, not
+  proof of fraud.
+- Validation and audit results describe the specific dataset and code
+  version that was executed.
+- Recorded counts can change if generation settings, rules, or
+  edge-case injection logic change.
+- Reproducibility should be demonstrated with actual repeated runs and
+  compared outputs rather than assumed from the presence of a seed.
+- Test-runner results should only be reported when the tests and
+  execution environment have been verified.
+
+---
+
+## 6. Overall AI-Use Statement
+
+Claude was used as a development assistant for project design,
+implementation support, debugging, and documentation. AI-generated
+suggestions were reviewed against the project requirements and the
+available implementation and execution results.
+
+The project outputs and verification results should be reported based
+on actual files and commands executed. Suggestions that were not
+implemented, tests that were not run, and results that were not
+independently checked should not be presented as completed work.
+
+For an accurate AI-use disclosure, list all AI tools that materially
+assisted with the project and describe their roles truthfully. Do not
+claim that only one AI tool was used if other AI tools also contributed
+to the code, design, or documentation.
+
+---
+
+## 7. Final Review Checklist
+
+Before committing this file, verify the following against the current
+repository:
+
+- [ ] Prompts 1–9 retain their exact original text.
+- [ ] Prompt entries describe work actually completed.
+- [ ] The eight edge-case labels match `ground_truth.csv`.
+- [ ] The clean validation report shows the current results.
+- [ ] The clean audit report shows the current results.
+- [ ] Edge-case validation and audit counts match the latest reports.
+- [ ] The four summary-report files listed above exist.
+- [ ] Any additional files or test results mentioned actually exist.
+- [ ] Reproducibility claims are supported by two runs and a real
+      comparison if such a test is claimed.
+- [ ] The AI-use statement reflects all tools that materially assisted.
+- [ ] No placeholder values or unverified claims remain.
+
+---
 ---
 ## 4. Template for each new entry
 
