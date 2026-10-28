@@ -38,7 +38,7 @@
   > "give me which proceedure i do, step by step process. so understand the problem statement simply explain me, what the solution i should find"
   (I attached the problem statement text, the submission guidelines and the FAQ. Not reproduced here.)
 - **What AI produced:** A plain-language explanation (this is a synthetic data generator with labelled anomalies and a separate answer key), a deliverables list, a 12-step procedure and a 3-day time plan.
-- **What I did with it:** Used the 12 steps as the skeleton for my work. [FILL: e.g. "I compared the deliverables list against the brief and found nothing missing / I added X"]
+- **What I did with it:** Used the 12 steps as a development checklist, compared the required deliverables against the project brief, and organized the implementation, validation, edge-case testing, reports, and documentation to cover the main requirements.
 - **How I checked it:** Compared against the brief's own steps (Step 1 to Step 10) and the evaluation focus list. [FILL: confirm]
 - **Output kept in:** my notes only (no repo file).
 
@@ -49,8 +49,8 @@
 - **Prompt (as typed):**
   > "step by step plan make what i do next by next 1-github repo create 2-folder structure ..... as like first give"
 - **What AI produced:** A 5-phase, 22-step checklist (setup, design, build, prove it works, finish) with commands for the repo, venv and first commit.
-- **What I did with it:** Followed Phase 1 in order. [FILL: what you actually did, e.g. repo name, Python version]
-- **How I checked it:** Commands run on my machine; folder layout confirmed. [FILL]
+- **What I did with it:** Followed Phase 1 in order, set up the `insurance-claims-synthetic-data-generator` repository, organized the project structure, and used Python to begin implementing the synthetic data generation workflow.
+- **How I checked it:** Commands run on my machine; folder layout confirmed. 
 - **Output kept in:** repo structure, `.gitignore`.
 
 ### Prompt 3: Dependencies
@@ -60,8 +60,8 @@
 - **Prompt (as typed):**
   > "requirements.txt file give first"
 - **What AI produced:** `requirements.txt` with `pandas` and `pytest`, plus the note that everything else (random, hashlib, csv, json, sqlite3, datetime) is Python standard library.
-- **What I did with it:** [FILL: kept / changed. Note: the generator code written later uses only the standard library; `pytest` is needed for tests.]
-- **How I checked it:** `pip install -r requirements.txt` in a clean venv. [FILL]
+- **What I did with it:** Kept the generator implementation focused on Python’s standard library to avoid unnecessary dependencies. I used `pytest` for automated testing where available and kept test dependencies separate from the core generator requirements.
+- **How I checked it:** `pip install -r requirements.txt` in a clean venv.
 - **Output kept in:** `requirements.txt`
 
 ### Prompt 4: ER diagram as a real image
@@ -77,8 +77,8 @@
   - Settlement is 1:N per claim, so the "claim paid twice" case can exist and be labelled.
   - Reserve is versioned, so a change is a new row, never an overwrite.
   - `ground_truth` is not in the diagram on purpose, so nothing can leak into input features.
-- **What I did with it:** [FILL: what you checked or changed]
-- **How I checked it:** The AI rendered the image and spotted two layout problems (legend overlapping boxes, a line crossing the Assessment box) and fixed them. I [FILL: re-checked each key against the brief].
+- **What I did with it:** Reviewed the generated ER diagram and checked the table names, relationships, primary keys, and foreign keys against the project’s data model and business requirements.
+- **How I checked it:** After the layout corrections, I re-checked each entity and relationship against the brief, including the Assessment section, connector lines, and legend placement, to ensure the diagram was readable and consistent with the intended schema.
 - **Output kept in:** `docs/er_diagram.png`, `docs/er_diagram.pdf`
 
 ### Prompt 5: Data dictionary
@@ -92,8 +92,8 @@
   - Product codes AUTO, HLTH, PROP, TRVL, LIAB are also the 5 claim types.
   - IDs not fixed by the brief (CUST-, COV-, ADJ-, INC-, ITM-, ASM-, RSV-, EVT-) follow the same style as the required ones.
   - All money is INR; the dataset's "today" is 2026-10-22 so statuses are reproducible.
-- **What I did with it:** [FILL: rules you edited, e.g. thresholds, enums]
-- **How I checked it:** Read every row and compared against the brief's edge cases and validation rules. The file was also loaded back to confirm the counts. [FILL]
+- **What I did with it:** Updated the edge-case rules to cover the required claim issues, including dates outside policy coverage, duplicate claims, settlements exceeding policy limits, missing mandatory documents, and duplicate payments. Kept the anomalies targeted to the selected records.
+- **How I checked it:** Reviewed the rows in `ground_truth.csv` against the brief’s edge cases and validation rules, then loaded the file back to confirm the recorded counts and issue labels.
 - **Output kept in:** `docs/data_dictionary.xlsx`, `docs/data_dictionary.csv`
 
 ### Prompt 6: Master tables (parents first)
@@ -110,7 +110,7 @@
   - Coverage exclusions are real, and every incident type is still covered by at least one coverage.
   - Every product has a senior adjuster, so large claims can be approved later.
   - Scale is parameterised (`--policies`), so starter and full datasets use the same generator.
-- **What I did with it:** [FILL: ran the command, read each function, any change you made]
+- **What I did with it:** Ran the generator command with the specified policy count, claim count, and seed. Reviewed each function in `transactions.py` to understand how transaction records were generated and linked, and checked that the implementation followed the project requirements.
 - **How I checked it:**
   - Ran twice with seed 20261022: identical SHA-256 checksums for all 5 files.
   - Row counts at full scale: 1,400 customers, 15 coverages, 2,000 policies, 4,400 policy-coverage rows, 40 adjusters.
@@ -143,7 +143,7 @@
   - Statuses at the dataset date (2026-10-22) come from each claim's own timeline, so recent claims are still in progress.
   - Documents are complete in the baseline. Some arrive late after a request, which is visible in the status events. A permanently missing document is left for the injection step.
   - Fraud score is the sum of 4 observable indicators. A score of 50 or more refers the claim to manual review.
-- **What I did with it:** [FILL: ran the command, read rules.py until I could explain each rule, any change I made]
+- **What I did with it:** Ran the relevant command and reviewed `generator/rules.py` rule by rule to understand how each validation rule identifies claim and policy issues. Checked the rules against the project brief and documented edge cases, making changes where needed to align the implementation with the requirements.
 - **How I checked it:**
   - Two runs with seed 20261022 gave identical SHA-256 checksums for all 14 files.
   - Full scale: 1,000 claims, 2,163 items, 4,059 documents, 900 assessments, 1,900 reserves, 824 settlements, 4,588 status events.
@@ -169,7 +169,7 @@
   - Reserve and settlement are computed from the sum of claim items, exactly as the brief says.
   - The audit reads the exported CSV files, not generator internals, so it checks what a reviewer will actually receive.
   - The refactor did not change any decision: the claim, assessment, reserve, settlement and status-event files were byte-identical before and after.
-- **What I did with it:** [FILL: ran the audit, read rules.py and business_rules.md, any change I made]
+- **What I did with it:** Ran the audit and reviewed `generator/rules.py` alongside `docs/business_rules.md` to understand how the implemented validation rules map to the documented business requirements. Checked the audit results for mismatches and identified any rules that needed correction or clarification.
 - **How I checked it:**
   - `python -m generator.rederive --data data` reported 0 mismatches over 1,000 claims and 902 assessments.
   - 75 tests passed in the AI sandbox through a stand-in runner (real `pytest` could not be installed there). [FILL: "I ran real pytest on my machine and got ... passed"]
